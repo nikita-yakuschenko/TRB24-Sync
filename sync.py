@@ -49,6 +49,8 @@ class Sync:
 
     def on_youtrack(self, issue_id: str) -> dict:
         issue = self.youtrack.get_issue(issue_id)
+        if not issue:
+            return {"ok": True, "skip": "not-ready"}
         readable = issue.get("idReadable") or issue_id
         project = (issue.get("project") or {}).get("shortName") or ""
         if project in SKIP_KEYS:

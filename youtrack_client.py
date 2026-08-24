@@ -14,8 +14,8 @@ class YouTrack:
         self.base = base.rstrip("/")
         self.headers = headers
 
-    def get_issue(self, issue_id: str) -> dict:
-        # Хук YouTrack часто приходит раньше, чем задача видна в REST (404).
+    def get_issue(self, issue_id: str) -> dict | None:
+        # Хук может прийти до коммита транзакции: 404 — не 500, иначе workflow откатывает карточку.
         url = f"{self.base}/api/issues/{issue_id}"
         with httpx.Client(timeout=30) as client:
             last = None
@@ -25,8 +25,7 @@ class YouTrack:
                     last.raise_for_status()
                     return last.json()
                 time.sleep(0.5)
-            last.raise_for_status()
-            return last.json()
+            return None
 
     def create_issue(self, project: str, summary: str, description: str, assignee_login: str | None) -> dict:
         body: dict = {

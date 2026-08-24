@@ -68,6 +68,15 @@ class _Settings:
     portal_base = "https://avgstroy.bitrix24.ru"
 
 
+def test_youtrack_not_ready_is_skip():
+    class _Missing:
+        def get_issue(self, _issue_id: str):
+            return None
+
+    out = Sync(_Settings(), _Store(), _Missing(), _BX()).on_youtrack("B24-4")
+    assert out == {"ok": True, "skip": "not-ready"}
+
+
 def test_skip_asl_and_site():
     for key, readable in (("ASL", "ASL-1"), ("SITE", "SITE-1")):
         yt = _YT({"idReadable": readable, "summary": "x", "description": "", "project": {"shortName": key}})

@@ -21,7 +21,7 @@
 
 Идентификаторы: `SYNC-123`. Работа только в **`SYNC`**. Задачи коннектора не зеркалятся в Bitrix (ключ в `SKIP_KEYS`). Хаб `B2B` тоже не зеркалим.
 
-Хуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=` на URL выше. YouTrack: workflow **`sync-connector`** (NOTIFY TRB24-Sync) на всех продуктовых проектах, кроме `SYNC` и `B2B`. Человеческое имя `sync.module-team.ru` — после A-записи в DNS на `155.212.147.165`.
+Хуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=` на URL выше. YouTrack: workflow **`sync-connector`** (NOTIFY TRB24-Sync) на всех продуктовых проектах, кроме `SYNC` и `B2B`. Правило `notify` шлёт хук через `postAsync` **после** коммита транзакции (4-й аргумент + `asyncFunctions`) — иначе 404 коннектора откатывает карточку. Исходник: `workflow/notify.js`. Человеческое имя `sync.module-team.ru` — после A-записи в DNS на `155.212.147.165`.
 
 ---
 
