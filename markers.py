@@ -26,3 +26,18 @@ def parse_bitrix_id(text: str | None) -> str | None:
         return None
     found = BX_MARK.search(text)
     return found.group(1) if found else None
+
+
+def clean_description(text: str | None) -> str:
+    # Старые карточки могли содержать HTML-маркеры и служебные ссылки.
+    if not text:
+        return ""
+    text = YT_MARK.sub("", text)
+    text = BX_MARK.sub("", text)
+    lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("Трекер:") or stripped.startswith("Bitrix:"):
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()

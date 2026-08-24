@@ -1,3 +1,5 @@
+import time
+
 import httpx
 
 ISSUE_FIELDS = (
@@ -13,11 +15,18 @@ class YouTrack:
         self.headers = headers
 
     def get_issue(self, issue_id: str) -> dict:
+        # Хук YouTrack часто приходит раньше, чем задача видна в REST (404).
         url = f"{self.base}/api/issues/{issue_id}"
         with httpx.Client(timeout=30) as client:
-            r = client.get(url, headers=self.headers, params={"fields": ISSUE_FIELDS})
-            r.raise_for_status()
-            return r.json()
+            last = None
+            for _ in range(5):
+                last = client.get(url, headers=self.headers, params={"fields": ISSUE_FIELDS})
+                if last.status_code != 404:
+                    last.raise_for_status()
+                    return last.json()
+                time.sleep(0.5)
+            last.raise_for_status()
+            return last.json()
 
     def create_issue(self, project: str, summary: str, description: str, assignee_login: str | None) -> dict:
         body: dict = {

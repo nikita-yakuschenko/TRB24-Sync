@@ -14,11 +14,14 @@
 | YouTrack | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/projects/SYNC), ключ **`SYNC`** |
 | Гант | одна диаграмма на `SYNC`; пока нет |
 | GitHub | [`nikita-yakuschenko/TRB24-Sync`](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main` |
-| Dokploy | TBD после деплоя; compose `docker-compose.yml`, порт **8080** |
+| Dokploy | проект **`sync`**, приложение **`trb24-sync`**, Dockerfile, том `sync-sqlite` → `/data` |
+| URL | https://sync-trb24-sync-79a0ac-155-212-147-165.sslip.io — `GET /health` = ok |
 | Bitrix | [avgstroy.bitrix24.ru](https://avgstroy.bitrix24.ru/), группа **987** avgst.io [Отдел информационных технологий] |
-| MCP | `user-youtrack`, `user-b24-dev-mcp` (справка), `user-dokploy` после деплоя |
+| MCP | `user-youtrack`, `user-b24-dev-mcp` (справка), `user-dokploy` |
 
 Идентификаторы: `SYNC-123`. Работа только в **`SYNC`**. Задачи коннектора не зеркалятся в Bitrix (ключ в `SKIP_KEYS`).
+
+Хуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=` на URL выше. Человеческое имя `sync.module-team.ru` — после A-записи в DNS на `155.212.147.165`.
 
 ---
 

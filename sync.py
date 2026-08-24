@@ -1,5 +1,5 @@
 from catalog import FROM_TRACKER_TAG, KEY_TO_NAME, SKIP_KEYS, key_for_tags
-from markers import bitrix_marker, parse_bitrix_id, parse_youtrack_id, youtrack_marker
+from markers import clean_description, parse_bitrix_id, parse_youtrack_id
 
 # Bitrix: 2 ждать, 3 в работе, 5 завершена
 STATUS_OPEN = "2"
@@ -24,7 +24,11 @@ def tags_of(task: dict) -> list[str]:
     if isinstance(raw, str):
         return [p.strip() for p in raw.split(",") if p.strip()]
     names = []
-    for item in raw:
+    if isinstance(raw, dict):
+        items = raw.values()
+    else:
+        items = raw
+    for item in items:
         if isinstance(item, str):
             names.append(item)
         elif isinstance(item, dict):
@@ -52,8 +56,10 @@ class Sync:
         if parse_bitrix_id(issue.get("description")):
             return {"ok": True, "skip": "from-bitrix"}
         pair = self.store.get_by_youtrack(readable)
+        if pair and pair["source"] == "bitrix":
+            return {"ok": True, "skip": "from-bitrix"}
         title = f"{readable}: {issue.get('summary') or ''}".strip()
-        desc = self._bitrix_description(issue, readable)
+        desc = clean_description(issue.get("description"))
         tags = [KEY_TO_NAME.get(project, project), FROM_TRACKER_TAG]
         responsible = self._responsible(assignee_login(issue))
         fields = {
@@ -62,7 +68,7 @@ class Sync:
             "GROUP_ID": self.settings.bitrix_group_id,
             "RESPONSIBLE_ID": responsible,
             "XML_ID": f"YT:{readable}",
-            "TAGS": ", ".join(tags),
+            "TAGS": tags,
             "STATUS": STATUS_DONE if is_resolved(issue) else STATUS_OPEN,
         }
         if pair:
@@ -88,7 +94,7 @@ class Sync:
             return {"ok": False, "error": str(err)}
         if not key:
             return {"ok": True, "skip": "no-route-tag"}
-        desc = self._youtrack_description(task, task_id, description)
+        desc = clean_description(description)
         if pair:
             self.youtrack.update_issue(pair["youtrack_id"], title, desc)
             return {"ok": True, "updated": pair["youtrack_id"]}
@@ -103,12 +109,3 @@ class Sync:
         if self.settings.bitrix_responsible:
             return int(self.settings.bitrix_responsible)
         raise RuntimeError("нет BITRIX_DEFAULT_RESPONSIBLE_ID и нет USER_MAP")
-
-    def _bitrix_description(self, issue: dict, readable: str) -> str:
-        body = issue.get("description") or ""
-        url = f"{self.settings.youtrack_base}/issue/{readable}"
-        return f"{youtrack_marker(readable)}\n\n{body}\n\nТрекер: {url}".strip()
-
-    def _youtrack_description(self, task: dict, task_id: str, body: str) -> str:
-        view = f"{self.settings.portal_base}/workgroups/group/{self.settings.bitrix_group_id}/tasks/task/view/{task_id}/"
-        return f"{bitrix_marker(task_id)}\n\n{body}\n\nBitrix: {view}".strip()

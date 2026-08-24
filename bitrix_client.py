@@ -16,7 +16,11 @@ class Bitrix:
         return data.get("result") or {}
 
     def task_get(self, task_id: str | int) -> dict:
-        result = self._call("tasks.task.get", {"taskId": int(task_id)})
+        # Без TAGS в select портал не отдаёт теги — маршрут Bitrix→YouTrack молчит.
+        result = self._call(
+            "tasks.task.get",
+            {"taskId": int(task_id), "select": ["*", "TAGS"]},
+        )
         return result.get("task") or result
 
     def task_add(self, fields: dict) -> dict:

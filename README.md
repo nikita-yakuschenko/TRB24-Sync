@@ -40,6 +40,6 @@ Bitrix: входящий вебхук (REST) в `BITRIX_WEBHOOK_URL`; исход
 
 `USER_MAP=n.yakuschenko:ID` — login трекера в id пользователя портала. Иначе `BITRIX_DEFAULT_RESPONSIBLE_ID`.
 
-## Compose
+## Деплой
 
-Dokploy, сеть `dokploy-network` (создать, если локально: `docker network create dokploy-network`). Том SQLite. Имена панели — в паспорт после деплоя, не выдумывать.
+Dokploy: проект `sync`, приложение `trb24-sync`, Dockerfile, том `sync-sqlite` → `/data`. Живой URL — в [SYNC-A-1](https://tracker.avgst.ru/articles/SYNC-A-1). Локально: сеть `dokploy-network` (`docker network create dokploy-network`).
