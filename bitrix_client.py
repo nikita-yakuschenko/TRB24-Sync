@@ -29,3 +29,7 @@ class Bitrix:
 
     def task_update(self, task_id: str | int, fields: dict) -> None:
         self._call("tasks.task.update", {"taskId": int(task_id), "fields": fields})
+
+    def task_complete(self, task_id: str | int) -> None:
+        # Канбан «Неразобранное» не закрывается полем STATUS в update.
+        self._call("tasks.task.complete", {"taskId": int(task_id)})

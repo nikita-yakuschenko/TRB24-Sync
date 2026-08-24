@@ -53,11 +53,18 @@ class Sync:
         project = (issue.get("project") or {}).get("shortName") or ""
         if project in SKIP_KEYS:
             return {"ok": True, "skip": "own-project"}
-        if parse_bitrix_id(issue.get("description")):
-            return {"ok": True, "skip": "from-bitrix"}
         pair = self.store.get_by_youtrack(readable)
-        if pair and pair["source"] == "bitrix":
-            return {"ok": True, "skip": "from-bitrix"}
+        closed = None
+        if pair and is_resolved(issue):
+            closed = self._close_bitrix(pair["bitrix_id"])
+        from_bitrix = bool(parse_bitrix_id(issue.get("description"))) or (
+            pair and pair["source"] == "bitrix"
+        )
+        if from_bitrix:
+            out = {"ok": True, "skip": "from-bitrix"}
+            if closed:
+                out["closed"] = closed
+            return out
         title = f"{readable}: {issue.get('summary') or ''}".strip()
         desc = clean_description(issue.get("description"))
         tags = [KEY_TO_NAME.get(project, project), FROM_TRACKER_TAG]
@@ -72,12 +79,21 @@ class Sync:
             "STATUS": STATUS_DONE if is_resolved(issue) else STATUS_OPEN,
         }
         if pair:
+            fields.pop("STATUS", None)
             self.bitrix.task_update(pair["bitrix_id"], fields)
-            return {"ok": True, "updated": pair["bitrix_id"]}
+            out = {"ok": True, "updated": pair["bitrix_id"]}
+            if closed:
+                out["closed"] = closed
+            return out
         created = self.bitrix.task_add(fields)
         bx_id = str(created.get("id") or created.get("ID"))
         self.store.put(readable, bx_id, "youtrack", project)
-        return {"ok": True, "created": bx_id}
+        if is_resolved(issue):
+            closed = self._close_bitrix(bx_id)
+        out = {"ok": True, "created": bx_id}
+        if closed:
+            out["closed"] = closed
+        return out
 
     def on_bitrix(self, task_id: str) -> dict:
         task = self.bitrix.task_get(task_id)
@@ -102,6 +118,14 @@ class Sync:
         readable = created.get("idReadable")
         self.store.put(readable, str(task_id), "bitrix", key)
         return {"ok": True, "created": readable}
+
+    def _close_bitrix(self, bitrix_id: str) -> str | None:
+        task = self.bitrix.task_get(bitrix_id)
+        status = str(task.get("status") or task.get("STATUS") or "")
+        if status in {STATUS_DONE, "4"}:
+            return None
+        self.bitrix.task_complete(bitrix_id)
+        return str(bitrix_id)
 
     def _responsible(self, login: str | None) -> int:
         if login and login in self.settings.user_map:

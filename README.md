@@ -2,13 +2,13 @@
 
 Спутник хаба [B24](https://tracker.avgst.ru/projects/B24): зеркало задач трекера в группу Bitrix **avgst.io [Отдел информационных технологий]** (`GROUP_ID` 987) и заявки из этой группы обратно в YouTrack.
 
-Стандарты: [AMS-1.1](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2). UI нет, ADS не применяется. Паспорт: [SYNC-A-1](https://tracker.avgst.ru/articles/SYNC-A-1). Git: [nikita-yakuschenko/TRB24-Sync](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main`.
+Стандарты: [AMS-1.2](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2). UI нет, ADS не применяется. Паспорт: [SYNC-A-1](https://tracker.avgst.ru/articles/SYNC-A-1). Git: [nikita-yakuschenko/TRB24-Sync](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main`.
 
 План — только YouTrack `SYNC`. Секреты не коммитить.
 
 ## Потоки
 
-1. YouTrack → Bitrix: задача трекера появляется в [группе 987](https://avgstroy.bitrix24.ru/workgroups/group/987/tasks/). В заголовке ключ (`CAT-3: …`), теги — полное имя проекта и `из YouTrack`.
+1. YouTrack → Bitrix: задача трекера появляется в [группе 987](https://avgstroy.bitrix24.ru/workgroups/group/987/tasks/). В заголовке ключ (`CAT-3: …`), теги — полное имя проекта и `из YouTrack`. Закрытие в трекере закрывает парную карточку в 987.
 2. Bitrix → YouTrack: задача в 987 без метки «из трекера» и с **ровно одним** тегом-именем проекта создаёт issue в этом ключе. Нет тега — молчим. Два имени проектов — ошибка в логе, карточку не плодим. Неясно — тег `Разобрать` (ключ `B24`).
 
 Комментарии не синхронизируются (AES YAGNI, первый срез).

@@ -2,7 +2,7 @@
 **Владелец в трекере:** n.yakuschenko  
 **Хаб:** [B24](https://tracker.avgst.ru/projects/B24) · паспорт [B24-A-1](https://tracker.avgst.ru/articles/B24-A-1) — спутник (AMS §14), бэклог не переносить в хаб.  
 **Класс зрелости (AES):** Prototype → MVP (FastAPI, SQLite пар, pytest маршрута; нет прода, нет живого health внешних API, комментарии не синхронизируются)  
-**Стандарты:** [AMS-1.1](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2) · [ADS-1.1](https://tracker.avgst.ru/articles/ITD-A-3) (ADS не применим: UI нет)
+**Стандарты:** [AMS-1.2](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2) · [ADS-1.1](https://tracker.avgst.ru/articles/ITD-A-3) (ADS не применим: UI нет)
 
 ---
 
@@ -33,8 +33,8 @@
 
 ## Потоки
 
-1. **YouTrack → Bitrix.** Витрина. Истина плана — трекер. В 987: заголовок `CAT-3: …`, теги «Каталог PDF» + `из YouTrack`, `XML_ID=YT:CAT-3`.
-2. **Bitrix → YouTrack.** Заявка человека в 987. Ровно один тег = полное имя проекта YouTrack. Нет тега — тишина. Два проекта — отказ. `Разобрать` → ключ `B24`.
+1. **YouTrack → Bitrix.** Витрина. Истина плана — трекер. В 987: заголовок `CAT-3: …`, теги «Каталог PDF» + `из YouTrack`, `XML_ID=YT:CAT-3`. Закрытие в трекере закрывает парную задачу в 987 (`tasks.task.complete`), даже если заявка пришла из Bitrix.
+2. **Bitrix → YouTrack.** Заявка человека в 987. Ровно один тег = полное имя проекта YouTrack. Нет тега — тишина. Два проекта — отказ. `Разобрать` → ключ `B24`. Заголовок и описание этой заявки обратно в портал из трекера не пишем.
 
 Эхо отсекается маркерами в описании и тегом `из YouTrack`. Удаление и комментарии в первом срезе не трогаем (AES YAGNI).
 

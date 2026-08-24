@@ -43,6 +43,8 @@ class _BX:
     def __init__(self, task: dict | None = None) -> None:
         self.task = task or {}
         self.added = None
+        self.updated = None
+        self.completed = None
 
     def task_get(self, _task_id: str) -> dict:
         return self.task
@@ -51,8 +53,11 @@ class _BX:
         self.added = fields
         return {"id": "1"}
 
-    def task_update(self, *_a, **_k) -> None:
-        return None
+    def task_update(self, task_id, fields: dict) -> None:
+        self.updated = {"id": str(task_id), "fields": fields}
+
+    def task_complete(self, task_id) -> None:
+        self.completed = str(task_id)
 
 
 class _Settings:
@@ -76,6 +81,68 @@ def test_from_bitrix_does_not_write_back():
     out = Sync(_Settings(), store, yt, bx).on_youtrack("COL-9")
     assert out["skip"] == "from-bitrix"
     assert bx.added is None
+    assert bx.updated is None
+    assert bx.completed is None
+
+
+def test_resolved_from_bitrix_closes_bitrix():
+    store = _Store()
+    store.put("COL-10", "373319", "bitrix", "COL")
+    yt = _YT(
+        {
+            "idReadable": "COL-10",
+            "summary": "заявка",
+            "description": "тело",
+            "resolved": 1756032556000,
+            "project": {"shortName": "COL"},
+        }
+    )
+    bx = _BX({"status": "2"})
+    out = Sync(_Settings(), store, yt, bx).on_youtrack("COL-10")
+    assert out["skip"] == "from-bitrix"
+    assert out["closed"] == "373319"
+    assert bx.completed == "373319"
+    assert bx.added is None
+    assert bx.updated is None
+
+
+def test_resolved_from_youtrack_closes_bitrix():
+    store = _Store()
+    store.put("COL-9", "373317", "youtrack", "COL")
+    yt = _YT(
+        {
+            "idReadable": "COL-9",
+            "summary": "зеркало",
+            "description": "тело",
+            "resolved": 1756032227000,
+            "project": {"shortName": "COL"},
+        }
+    )
+    bx = _BX({"status": "2"})
+    out = Sync(_Settings(), store, yt, bx).on_youtrack("COL-9")
+    assert out["updated"] == "373317"
+    assert out["closed"] == "373317"
+    assert bx.completed == "373317"
+    assert "STATUS" not in bx.updated["fields"]
+
+
+def test_already_completed_bitrix_is_left_alone():
+    store = _Store()
+    store.put("COL-10", "373319", "bitrix", "COL")
+    yt = _YT(
+        {
+            "idReadable": "COL-10",
+            "summary": "заявка",
+            "description": "тело",
+            "resolved": 1,
+            "project": {"shortName": "COL"},
+        }
+    )
+    bx = _BX({"status": "5"})
+    out = Sync(_Settings(), store, yt, bx).on_youtrack("COL-10")
+    assert out["skip"] == "from-bitrix"
+    assert "closed" not in out
+    assert bx.completed is None
 
 
 def test_bitrix_card_has_no_sync_comment():
