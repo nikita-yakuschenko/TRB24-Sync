@@ -2,7 +2,7 @@
 **Владелец в трекере:** n.yakuschenko  
 **Хаб:** [B24](https://tracker.avgst.ru/projects/B24) · паспорт [B24-A-1](https://tracker.avgst.ru/articles/B24-A-1) — спутник (AMS §14), бэклог не переносить в хаб.  
 **Класс зрелости (AES):** Prototype → MVP (FastAPI, SQLite пар, pytest маршрута; нет прода, нет живого health внешних API, комментарии не синхронизируются)  
-**Стандарты:** [AMS-1.2](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2) · [ADS-1.1](https://tracker.avgst.ru/articles/ITD-A-3) (ADS не применим: UI нет)
+**Стандарты:** [AMS-1.3](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2) · [ADS-1.1](https://tracker.avgst.ru/articles/ITD-A-3) (ADS не применим: UI нет)
 
 ---
 
@@ -13,6 +13,7 @@
 | Продукт | Два насоса задач: YouTrack ↔ группа Bitrix 987 |
 | YouTrack | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/projects/SYNC), ключ **`SYNC`** |
 | Гант | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/gantt-charts/218-4), одна диаграмма, не дублировать |
+| Agile | [Доска Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/agiles/201-18), одна доска, не дублировать |
 | GitHub | [`nikita-yakuschenko/TRB24-Sync`](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main` |
 | Dokploy | проект **`sync`**, приложение **`trb24-sync`**, Dockerfile, том `sync-sqlite` → `/data` |
 | URL | https://sync-trb24-sync-79a0ac-155-212-147-165.sslip.io — `GET /health` = ok |

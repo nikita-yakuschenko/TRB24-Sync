@@ -171,6 +171,48 @@ def test_bitrix_card_has_no_sync_comment():
     assert "sync:youtrack" not in (bx.added["DESCRIPTION"] or "")
     assert bx.added["DESCRIPTION"] == "как в трекере"
     assert bx.added["TITLE"].startswith("COL-10:")
+    assert bx.added["STATUS"] == "2"
+
+
+def _yt_issue(state: str, resolved=None):
+    return {
+        "idReadable": "TRK-1",
+        "summary": "пин образа",
+        "description": "тело",
+        "resolved": resolved,
+        "project": {"shortName": "TRK"},
+        "customFields": [{"name": "State", "value": {"name": state}}],
+    }
+
+
+def test_in_progress_creates_bitrix_status_3():
+    bx = _BX()
+    Sync(_Settings(), _Store(), _YT(_yt_issue("In Progress")), bx).on_youtrack("TRK-1")
+    assert bx.added["STATUS"] == "3"
+
+
+def test_in_progress_russian_creates_bitrix_status_3():
+    bx = _BX()
+    Sync(_Settings(), _Store(), _YT(_yt_issue("В работе")), bx).on_youtrack("TRK-1")
+    assert bx.added["STATUS"] == "3"
+
+
+def test_in_progress_updates_existing_bitrix_status():
+    store = _Store()
+    store.put("TRK-1", "373461", "youtrack", "TRK")
+    bx = _BX()
+    out = Sync(_Settings(), store, _YT(_yt_issue("In Progress")), bx).on_youtrack("TRK-1")
+    assert out["updated"] == "373461"
+    assert bx.updated["fields"]["STATUS"] == "3"
+    assert bx.completed is None
+
+
+def test_open_updates_bitrix_waiting_status():
+    store = _Store()
+    store.put("TRK-1", "373461", "youtrack", "TRK")
+    bx = _BX()
+    Sync(_Settings(), store, _YT(_yt_issue("Open")), bx).on_youtrack("TRK-1")
+    assert bx.updated["fields"]["STATUS"] == "2"
 
 
 def test_tags_from_bitrix_map():

@@ -3,7 +3,9 @@ from markers import clean_description, parse_bitrix_id, parse_youtrack_id
 
 # Bitrix: 2 ждать, 3 в работе, 5 завершена
 STATUS_OPEN = "2"
+STATUS_IN_PROGRESS = "3"
 STATUS_DONE = "5"
+IN_PROGRESS_STATES = {"In Progress", "В работе"}
 
 
 def assignee_login(issue: dict) -> str | None:
@@ -17,6 +19,22 @@ def assignee_login(issue: dict) -> str | None:
 
 def is_resolved(issue: dict) -> bool:
     return issue.get("resolved") not in (None, False, "")
+
+
+def state_name(issue: dict) -> str | None:
+    for field in issue.get("customFields") or []:
+        if field.get("name") == "State":
+            value = field.get("value") or {}
+            if isinstance(value, dict):
+                return value.get("name")
+    return None
+
+
+def bitrix_open_status(issue: dict) -> str:
+    # «В работе» в трекере = status 3 в портале. Остальное открытое = ждать.
+    if state_name(issue) in IN_PROGRESS_STATES:
+        return STATUS_IN_PROGRESS
+    return STATUS_OPEN
 
 
 def tags_of(task: dict) -> list[str]:
@@ -78,10 +96,14 @@ class Sync:
             "RESPONSIBLE_ID": responsible,
             "XML_ID": f"YT:{readable}",
             "TAGS": tags,
-            "STATUS": STATUS_DONE if is_resolved(issue) else STATUS_OPEN,
         }
+        # Закрытие — только complete(). STATUS на update канбан «Неразобранное» не закрывает.
+        if is_resolved(issue):
+            if not pair:
+                fields["STATUS"] = STATUS_DONE
+        else:
+            fields["STATUS"] = bitrix_open_status(issue)
         if pair:
-            fields.pop("STATUS", None)
             self.bitrix.task_update(pair["bitrix_id"], fields)
             out = {"ok": True, "updated": pair["bitrix_id"]}
             if closed:
