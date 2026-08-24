@@ -12,16 +12,16 @@
 |---|---|
 | Продукт | Два насоса задач: YouTrack ↔ группа Bitrix 987 |
 | YouTrack | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/projects/SYNC), ключ **`SYNC`** |
-| Гант | одна диаграмма на `SYNC`; пока нет |
+| Гант | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/gantt-charts/218-4), одна диаграмма, не дублировать |
 | GitHub | [`nikita-yakuschenko/TRB24-Sync`](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main` |
 | Dokploy | проект **`sync`**, приложение **`trb24-sync`**, Dockerfile, том `sync-sqlite` → `/data` |
 | URL | https://sync-trb24-sync-79a0ac-155-212-147-165.sslip.io — `GET /health` = ok |
 | Bitrix | [avgstroy.bitrix24.ru](https://avgstroy.bitrix24.ru/), группа **987** avgst.io [Отдел информационных технологий] |
 | MCP | `user-youtrack`, `user-b24-dev-mcp` (справка), `user-dokploy` |
 
-Идентификаторы: `SYNC-123`. Работа только в **`SYNC`**. Задачи коннектора не зеркалятся в Bitrix (ключ в `SKIP_KEYS`).
+Идентификаторы: `SYNC-123`. Работа только в **`SYNC`**. Задачи коннектора не зеркалятся в Bitrix (ключ в `SKIP_KEYS`). Хаб `B2B` тоже не зеркалим.
 
-Хуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=` на URL выше. Человеческое имя `sync.module-team.ru` — после A-записи в DNS на `155.212.147.165`.
+Хуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=` на URL выше. YouTrack: workflow **`sync-connector`** (NOTIFY TRB24-Sync) на всех продуктовых проектах, кроме `SYNC` и `B2B`. Человеческое имя `sync.module-team.ru` — после A-записи в DNS на `155.212.147.165`.
 
 ---
 
@@ -57,9 +57,9 @@
 ## Ограничения
 
 - Входящий вебхук и исходящие события Bitrix ставит админ портала.
-- Webhook YouTrack на `issueCreated` / `issueUpdated` — в UI трекера.
+- Webhook YouTrack на `issueCreated` / `issueUpdated` — workflow `sync-connector` на продуктовых проектах. `SYNC` и `B2B` не вешаем.
 - `BITRIX_DEFAULT_RESPONSIBLE_ID` и `USER_MAP` обязательны для зеркала в портал.
-- Поле-список в Bitrix надёжнее тегов; первый срез читает теги.
+- В группе 987 заведены теги полных имён проектов плюс `из YouTrack` и `Разобрать` (служебная карточка `XML_ID=YT:SYNC-TAGS`). Свободный ввод портал не запирает — берите имя из списка.
 
 ---
 

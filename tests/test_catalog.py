@@ -23,3 +23,9 @@ def test_two_projects_fail():
     except ValueError:
         return
     raise AssertionError("ожидали отказ")
+
+
+def test_skip_keys_include_hub_and_self():
+    from catalog import SKIP_KEYS
+
+    assert SKIP_KEYS == {"SYNC", "B2B"}

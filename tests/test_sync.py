@@ -68,6 +68,12 @@ class _Settings:
     portal_base = "https://avgstroy.bitrix24.ru"
 
 
+def test_skip_b2b_hub():
+    yt = _YT({"idReadable": "B2B-1", "summary": "хаб", "description": "", "project": {"shortName": "B2B"}})
+    out = Sync(_Settings(), _Store(), yt, _BX()).on_youtrack("B2B-1")
+    assert out["skip"] == "own-project"
+
+
 def test_clean_drops_html_and_footers():
     raw = "<!-- sync:youtrack:COL-9 -->\nТекст\n\nТрекер: https://x\nBitrix: https://y"
     assert clean_description(raw) == "Текст"

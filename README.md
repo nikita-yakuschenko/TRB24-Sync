@@ -34,7 +34,7 @@ $env:SQLITE_PATH=".\data\sync.sqlite"
 
 Вебхуки: `POST /hooks/youtrack?secret=` и `POST /hooks/bitrix?secret=`. Секрет из `WEBHOOK_SECRET`.
 
-YouTrack: webhook app / HTTP notification на `issueCreated` и `issueUpdated`, все продуктовые проекты кроме шума, URL этого сервиса.
+YouTrack: webhook app / HTTP notification **или** workflow `sync-connector` (NOTIFY TRB24-Sync) на продуктовых проектах, URL этого сервиса. `SYNC` и `B2B` не вешаем.
 
 Bitrix: входящий вебхук (REST) в `BITRIX_WEBHOOK_URL`; исходящие события `OnTaskAdd` / `OnTaskUpdate` на `/hooks/bitrix`. Удаление не зеркалим.
 

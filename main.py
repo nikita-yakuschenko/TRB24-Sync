@@ -26,13 +26,19 @@ def get_sync() -> Sync:
     return _sync
 
 
-def _check_secret(secret: str | None, header: str | None) -> None:
+def _check_secret(
+    secret: str | None,
+    header: str | None,
+    youtrack_token: str | None = None,
+) -> None:
     expected = get_sync().settings.webhook_secret
     if not expected:
         return
     got = secret or ""
     if header and header.startswith("Bearer "):
         got = got or header[7:]
+    if youtrack_token:
+        got = got or youtrack_token
     if got != expected:
         raise HTTPException(status_code=401, detail="bad secret")
 
@@ -49,8 +55,9 @@ async def youtrack_hook(
     request: Request,
     secret: str | None = Query(default=None),
     authorization: str | None = Header(default=None),
+    x_youtrack_token: str | None = Header(default=None, alias="X-YouTrack-Token"),
 ) -> dict:
-    _check_secret(secret, authorization)
+    _check_secret(secret, authorization, x_youtrack_token)
     payload = await request.json()
     issue_id = payload.get("id") or payload.get("issueId")
     nested = payload.get("issue") or {}
