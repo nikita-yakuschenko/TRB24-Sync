@@ -13,7 +13,7 @@
 | Продукт | Два насоса задач: YouTrack ↔ группа Bitrix 987 |
 | YouTrack | [Коннектор YouTrack × Bitrix24](https://tracker.avgst.ru/projects/SYNC), ключ **`SYNC`** |
 | Гант | одна диаграмма на `SYNC`; пока нет |
-| GitHub | TBD (этот репозиторий, remote ещё не заведён) |
+| GitHub | [`nikita-yakuschenko/TRB24-Sync`](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main` |
 | Dokploy | TBD после деплоя; compose `docker-compose.yml`, порт **8080** |
 | Bitrix | [avgstroy.bitrix24.ru](https://avgstroy.bitrix24.ru/), группа **987** avgst.io [Отдел информационных технологий] |
 | MCP | `user-youtrack`, `user-b24-dev-mcp` (справка), `user-dokploy` после деплоя |
@@ -45,6 +45,7 @@
 | Заявки завода до принятия | задача в группе 987 |
 | Пара id | SQLite коннектора |
 | Словарь имён | `catalog.py` |
+| Код | GitHub `nikita-yakuschenko/TRB24-Sync` |
 
 Секреты: `.env` / Dokploy, не паспорт.
 

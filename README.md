@@ -2,7 +2,7 @@
 
 Спутник хаба [B24](https://tracker.avgst.ru/projects/B24): зеркало задач трекера в группу Bitrix **avgst.io [Отдел информационных технологий]** (`GROUP_ID` 987) и заявки из этой группы обратно в YouTrack.
 
-Стандарты: [AMS-1.1](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2). UI нет, ADS не применяется. Паспорт: статья `SYNC-A-1` после заведения проекта.
+Стандарты: [AMS-1.1](https://tracker.avgst.ru/articles/ITD-A-1) · [AES-1.1](https://tracker.avgst.ru/articles/ITD-A-2). UI нет, ADS не применяется. Паспорт: [SYNC-A-1](https://tracker.avgst.ru/articles/SYNC-A-1). Git: [nikita-yakuschenko/TRB24-Sync](https://github.com/nikita-yakuschenko/TRB24-Sync), ветка `main`.
 
 План — только YouTrack `SYNC`. Секреты не коммитить.
 
