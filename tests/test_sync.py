@@ -68,7 +68,11 @@ class _Settings:
     portal_base = "https://avgstroy.bitrix24.ru"
 
 
-def test_skip_b2b_hub():
+def test_skip_asl_and_site():
+    for key, readable in (("ASL", "ASL-1"), ("SITE", "SITE-1")):
+        yt = _YT({"idReadable": readable, "summary": "x", "description": "", "project": {"shortName": key}})
+        out = Sync(_Settings(), _Store(), yt, _BX()).on_youtrack(readable)
+        assert out["skip"] == "own-project"
     yt = _YT({"idReadable": "B2B-1", "summary": "хаб", "description": "", "project": {"shortName": "B2B"}})
     out = Sync(_Settings(), _Store(), yt, _BX()).on_youtrack("B2B-1")
     assert out["skip"] == "own-project"

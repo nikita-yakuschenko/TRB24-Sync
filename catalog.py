@@ -25,8 +25,8 @@ KEY_TO_NAME["B24"] = "Интеграция Bitrix24 × Авангард Стро
 
 INBOX_NAME = "Разобрать"
 FROM_TRACKER_TAG = "из YouTrack"
-# SYNC — сам коннектор. B2B — хаб партнёрского кабинета, в 987 не зеркалим.
-SKIP_KEYS = {"SYNC", "B2B"}
+# SYNC — сам коннектор. B2B — хаб. ASL и SITE в 987 не зеркалим.
+SKIP_KEYS = {"SYNC", "B2B", "ASL", "SITE"}
 
 
 def key_for_tags(tags: list[str]) -> str | None:
