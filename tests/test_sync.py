@@ -1,5 +1,5 @@
 from markers import clean_description
-from sync import Sync, tags_of
+from sync import Sync, tags_of, youtrack_state_from_bitrix
 
 
 class _Store:
@@ -27,6 +27,7 @@ class _YT:
     def __init__(self, issue: dict) -> None:
         self.issue = issue
         self.created = None
+        self.updated = None
 
     def get_issue(self, _issue_id: str) -> dict:
         return self.issue
@@ -35,13 +36,19 @@ class _YT:
         self.created = {"project": project, "summary": summary, "description": description}
         return {"idReadable": "COL-99"}
 
-    def update_issue(self, *_a, **_k) -> None:
-        return None
+    def update_issue(self, issue_id, summary=None, description=None, state=None) -> None:
+        self.updated = {
+            "id": issue_id,
+            "summary": summary,
+            "description": description,
+            "state": state,
+        }
 
 
 class _BX:
-    def __init__(self, task: dict | None = None) -> None:
+    def __init__(self, task: dict | None = None, stages: dict | None = None) -> None:
         self.task = task or {}
+        self.stages = stages or {}
         self.added = None
         self.updated = None
         self.completed = None
@@ -58,6 +65,9 @@ class _BX:
 
     def task_complete(self, task_id) -> None:
         self.completed = str(task_id)
+
+    def task_stages(self, _group_id) -> dict:
+        return self.stages
 
 
 class _Settings:
@@ -231,3 +241,84 @@ def test_tags_from_bitrix_map():
     assert yt.created["summary"] == "Нет ответа в OL"
     assert "sync:bitrix" not in yt.created["description"]
     assert yt.created["description"] == "клиент ждёт"
+    assert out["state"] == "Open"
+
+
+GROUP_STAGES = {
+    "2579": {"ID": "2579", "TITLE": "В работе"},
+    "2587": {"ID": "2587", "TITLE": "Бэклог"},
+    "2573": {"ID": "2573", "TITLE": "Готово"},
+}
+
+
+def _bx_from_yt(stage_id="2579", status="2"):
+    return {
+        "title": "B2B-2: Почта",
+        "description": "",
+        "xmlId": "YT:B2B-2",
+        "status": status,
+        "stageId": stage_id,
+        "groupId": "987",
+        "tags": [{"title": "из YouTrack"}, {"title": "b2b-Партнёрский кабинет"}],
+    }
+
+
+def test_bitrix_stage_maps_to_ams_state():
+    assert youtrack_state_from_bitrix({"status": "2"}, "В работе") == "In Progress"
+    assert youtrack_state_from_bitrix({"status": "2"}, "Тестирование") == "In Progress"
+    assert youtrack_state_from_bitrix({"status": "2"}, "Бэклог") == "Open"
+    assert youtrack_state_from_bitrix({"status": "2"}, "Готово") == "Done"
+    assert youtrack_state_from_bitrix({"status": "3"}, "") == "In Progress"
+
+
+def test_kanban_in_progress_sets_youtrack_state():
+    yt = _YT(
+        {
+            "idReadable": "B2B-2",
+            "customFields": [{"name": "State", "value": {"name": "Open"}}],
+        }
+    )
+    out = Sync(_Settings(), _Store(), yt, _BX(_bx_from_yt(), GROUP_STAGES)).on_bitrix("373471")
+    assert out == {"ok": True, "updated": "B2B-2", "state": "In Progress"}
+    assert yt.updated["id"] == "B2B-2"
+    assert yt.updated["state"] == "In Progress"
+    assert yt.updated["summary"] is None
+    assert yt.created is None
+
+
+def test_kanban_already_in_progress_is_noop():
+    yt = _YT(
+        {
+            "idReadable": "B2B-2",
+            "customFields": [{"name": "State", "value": {"name": "В работе"}}],
+        }
+    )
+    out = Sync(_Settings(), _Store(), yt, _BX(_bx_from_yt(), GROUP_STAGES)).on_bitrix("373471")
+    assert out["skip"] == "state-already"
+    assert yt.updated is None
+
+
+def test_kanban_backlog_sets_open():
+    yt = _YT(
+        {
+            "idReadable": "B2B-2",
+            "customFields": [{"name": "State", "value": {"name": "In Progress"}}],
+        }
+    )
+    out = Sync(_Settings(), _Store(), yt, _BX(_bx_from_yt("2587"), GROUP_STAGES)).on_bitrix("373471")
+    assert out["state"] == "Open"
+    assert yt.updated["state"] == "Open"
+
+
+def test_from_youtrack_tag_without_id_still_skips():
+    task = {
+        "title": "без пары",
+        "xmlId": "",
+        "status": "2",
+        "tags": [{"title": "из YouTrack"}],
+    }
+    yt = _YT({})
+    out = Sync(_Settings(), _Store(), yt, _BX(task)).on_bitrix("1")
+    assert out["skip"] == "from-youtrack"
+    assert yt.updated is None
+    assert yt.created is None

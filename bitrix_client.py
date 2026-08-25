@@ -33,3 +33,7 @@ class Bitrix:
     def task_complete(self, task_id: str | int) -> None:
         # Канбан «Неразобранное» не закрывается полем STATUS в update.
         self._call("tasks.task.complete", {"taskId": int(task_id)})
+
+    def task_stages(self, group_id: str | int) -> dict:
+        # Колонки канбана группы. Перенос карточки пишет STAGE_ID, не STATUS.
+        return self._call("task.stages.get", {"entityId": int(group_id), "isAdmin": "Y"}) or {}

@@ -45,12 +45,26 @@ class YouTrack:
             r.raise_for_status()
             return r.json()
 
-    def update_issue(self, issue_id: str, summary: str | None, description: str | None) -> None:
+    def update_issue(
+        self,
+        issue_id: str,
+        summary: str | None = None,
+        description: str | None = None,
+        state: str | None = None,
+    ) -> None:
         payload: dict = {}
         if summary is not None:
             payload["summary"] = summary
         if description is not None:
             payload["description"] = description
+        if state:
+            payload["customFields"] = [
+                {
+                    "name": "State",
+                    "$type": "StateIssueCustomField",
+                    "value": {"name": state},
+                }
+            ]
         if not payload:
             return
         with httpx.Client(timeout=30) as client:
