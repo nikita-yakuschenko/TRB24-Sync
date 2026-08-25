@@ -37,3 +37,21 @@ class Bitrix:
     def task_stages(self, group_id: str | int) -> dict:
         # Колонки канбана группы. Перенос карточки пишет STAGE_ID, не STATUS.
         return self._call("task.stages.get", {"entityId": int(group_id), "isAdmin": "Y"}) or {}
+
+    def task_find_by_xml_id(self, xml: str, group_id: str | int) -> str | None:
+        # Пары B2B в SQLite нет: витрина заведена руками, ищем XML_ID=YT:B2B-2.
+        result = self._call(
+            "tasks.task.list",
+            {
+                "filter": {"XML_ID": xml, "GROUP_ID": int(group_id)},
+                "select": ["ID", "XML_ID"],
+            },
+        )
+        if isinstance(result, dict):
+            tasks = result.get("tasks") or result.get("TASKS") or []
+        else:
+            tasks = result or []
+        if not tasks:
+            return None
+        first = tasks[0]
+        return str(first.get("id") or first.get("ID") or "") or None

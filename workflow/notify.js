@@ -3,7 +3,7 @@
 const entities = require('@jetbrains/youtrack-scripting-api/entities');
 const http = require('@jetbrains/youtrack-scripting-api/http');
 
-const SKIP = {SYNC: true, B2B: true};
+const SKIP = {SYNC: true};
 const HOST = 'https://sync-trb24-sync-79a0ac-155-212-147-165.sslip.io';
 const SECRET = '{{WEBHOOK_SECRET}}';
 

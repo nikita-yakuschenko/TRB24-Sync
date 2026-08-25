@@ -46,9 +46,10 @@ class _YT:
 
 
 class _BX:
-    def __init__(self, task: dict | None = None, stages: dict | None = None) -> None:
+    def __init__(self, task: dict | None = None, stages: dict | None = None, xml_ids: dict | None = None) -> None:
         self.task = task or {}
         self.stages = stages or {}
+        self.xml_ids = xml_ids or {}
         self.added = None
         self.updated = None
         self.completed = None
@@ -68,6 +69,9 @@ class _BX:
 
     def task_stages(self, _group_id) -> dict:
         return self.stages
+
+    def task_find_by_xml_id(self, xml: str, _group_id) -> str | None:
+        return (self.xml_ids or {}).get(xml)
 
 
 class _Settings:
@@ -322,3 +326,45 @@ def test_from_youtrack_tag_without_id_still_skips():
     assert out["skip"] == "from-youtrack"
     assert yt.updated is None
     assert yt.created is None
+
+
+def _b2b_resolved():
+    return {
+        "idReadable": "B2B-2",
+        "summary": "почта",
+        "description": "",
+        "resolved": 1,
+        "project": {"shortName": "B2B"},
+        "customFields": [{"name": "State", "value": {"name": "Done"}}],
+    }
+
+
+def test_b2b_resolved_closes_bitrix_from_store():
+    store = _Store()
+    store.put("B2B-2", "373471", "youtrack", "B2B")
+    bx = _BX({"status": "2", "stageId": "2579", "groupId": "987"}, GROUP_STAGES)
+    out = Sync(_Settings(), store, _YT(_b2b_resolved()), bx).on_youtrack("B2B-2")
+    assert out["skip"] == "own-project"
+    assert out["closed"] == "373471"
+    assert bx.completed == "373471"
+    assert bx.updated["fields"]["STAGE_ID"] == "2573"
+    assert bx.added is None
+
+
+def test_b2b_resolved_finds_xml_without_store():
+    bx = _BX(
+        {"status": "2", "stageId": "2579", "groupId": "987"},
+        GROUP_STAGES,
+        xml_ids={"YT:B2B-2": "373471"},
+    )
+    out = Sync(_Settings(), _Store(), _YT(_b2b_resolved()), bx).on_youtrack("B2B-2")
+    assert out["closed"] == "373471"
+    assert bx.completed == "373471"
+    assert bx.added is None
+
+
+def test_kanban_does_not_reopen_resolved_youtrack():
+    yt = _YT(_b2b_resolved())
+    out = Sync(_Settings(), _Store(), yt, _BX(_bx_from_yt(), GROUP_STAGES)).on_bitrix("373471")
+    assert out["skip"] == "yt-resolved"
+    assert yt.updated is None

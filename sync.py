@@ -111,6 +111,15 @@ class Sync:
         readable = issue.get("idReadable") or issue_id
         project = (issue.get("project") or {}).get("shortName") or ""
         if project in SKIP_KEYS:
+            # Витрину для хаба не создаём. Закрытие уже существующей карточки в 987 — да.
+            if is_resolved(issue):
+                bx_id = self._bitrix_id_for(readable)
+                if bx_id:
+                    closed = self._close_bitrix(bx_id)
+                    out = {"ok": True, "skip": "own-project"}
+                    if closed:
+                        out["closed"] = closed
+                    return out
             return {"ok": True, "skip": "own-project"}
         pair = self.store.get_by_youtrack(readable)
         closed = None
@@ -192,14 +201,19 @@ class Sync:
         current = state_name(issue) if issue else None
         if same_ams_state(current, desired):
             return {"ok": True, "skip": "state-already", "updated": yt_id, "state": desired}
+        # План — трекер: канбан 987 не открывает уже закрытую карточку.
+        if issue and is_resolved(issue) and desired != "Done":
+            return {"ok": True, "skip": "yt-resolved", "updated": yt_id, "state": current}
         self.youtrack.update_issue(yt_id, state=desired)
         return {"ok": True, "updated": yt_id, "state": desired}
 
-    def _stage_title(self, task: dict) -> str:
-        sid = str(task.get("stageId") or task.get("STAGE_ID") or "")
-        if not sid:
-            return ""
-        gid = str(task.get("groupId") or task.get("GROUP_ID") or self.settings.bitrix_group_id)
+    def _bitrix_id_for(self, readable: str) -> str | None:
+        pair = self.store.get_by_youtrack(readable)
+        if pair:
+            return pair["bitrix_id"]
+        return self.bitrix.task_find_by_xml_id(f"YT:{readable}", self.settings.bitrix_group_id)
+
+    def _stages_for(self, gid: str) -> dict[str, str]:
         cache = self._stage_titles.get(gid)
         if cache is None:
             raw = self.bitrix.task_stages(gid) or {}
@@ -209,15 +223,35 @@ class Sync:
                 if isinstance(row, dict):
                     cache[str(row.get("ID") or "")] = str(row.get("TITLE") or "")
             self._stage_titles[gid] = cache
-        return cache.get(sid, "")
+        return cache
+
+    def _stage_title(self, task: dict) -> str:
+        sid = str(task.get("stageId") or task.get("STAGE_ID") or "")
+        if not sid:
+            return ""
+        gid = str(task.get("groupId") or task.get("GROUP_ID") or self.settings.bitrix_group_id)
+        return self._stages_for(gid).get(sid, "")
+
+    def _done_stage_id(self, task: dict) -> str | None:
+        gid = str(task.get("groupId") or task.get("GROUP_ID") or self.settings.bitrix_group_id)
+        for sid, title in self._stages_for(gid).items():
+            if (title or "").strip().lower() in STAGE_DONE:
+                return sid
+        return None
 
     def _close_bitrix(self, bitrix_id: str) -> str | None:
         task = self.bitrix.task_get(bitrix_id)
         status = str(task.get("status") or task.get("STATUS") or "")
-        if status in {STATUS_DONE, "4"}:
-            return None
-        self.bitrix.task_complete(bitrix_id)
-        return str(bitrix_id)
+        stage = (self._stage_title(task) or "").strip().lower()
+        did = False
+        if status not in {STATUS_DONE, "4"}:
+            self.bitrix.task_complete(bitrix_id)
+            did = True
+        sid = self._done_stage_id(task)
+        if sid and stage not in STAGE_DONE:
+            self.bitrix.task_update(bitrix_id, {"STAGE_ID": sid})
+            did = True
+        return str(bitrix_id) if did else None
 
     def _responsible(self, login: str | None) -> int:
         if login and login in self.settings.user_map:
