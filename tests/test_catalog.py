@@ -17,6 +17,10 @@ def test_no_route():
     assert key_for_tags(["смарт-процесс"]) is None
 
 
+def test_web_human_name():
+    assert key_for_tags(["Обновление сайта Авангард Строй"]) == "WEB"
+
+
 def test_two_projects_fail():
     try:
         key_for_tags(["Каталог PDF", "Open Lines ДомКлик"])
